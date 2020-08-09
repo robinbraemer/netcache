@@ -10,6 +10,7 @@ import eu.levenproxy.netcache.server.jobs.StayAliveJob;
 import eu.levenproxy.netcache.storage.StorageCachePool;
 import eu.levenproxy.netcache.config.GsonConfig;
 import eu.levenproxy.netcache.utils.Logger;
+import eu.levenproxy.netcache.utils.SQLCredentials;
 import eu.levenproxy.netcache.utils.Utils;
 import eu.levenproxy.netcache.utils.cron.CronTimerTask;
 
@@ -25,7 +26,7 @@ public class CacheServer {
     private final int tcpPort;
     private final ClientManager clientManager;
 
-    public CacheServer(KryoNetty kryoNetty) {
+    public CacheServer(KryoNetty kryoNetty, SQLCredentials sqlCredentials) {
         this.logger = new Logger();
         Log.set(Log.LEVEL_NONE);
         this.loggerThread = new Thread(logger::start);
@@ -36,7 +37,7 @@ public class CacheServer {
         this.kryoServer = new ThreadedServer(kryoNetty);
         this.kryoServer.eventHandler().register(new ServerListener(this));
 
-        this.cachePool = new StorageCachePool(this);
+        this.cachePool = new StorageCachePool(this, sqlCredentials);
         this.clientManager = new ClientManager();
 
         this.cronTimerTask = new CronTimerTask(Executors.newCachedThreadPool());

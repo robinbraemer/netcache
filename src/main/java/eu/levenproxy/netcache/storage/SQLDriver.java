@@ -1,5 +1,7 @@
 package eu.levenproxy.netcache.storage;
 
+import eu.levenproxy.netcache.utils.SQLCredentials;
+
 import java.sql.*;
 import java.util.ArrayList;
 
@@ -13,18 +15,14 @@ public class SQLDriver {
     private int fetchSize;
     private Connection conn;
 
-    public SQLDriver(String host, int port, String user, String pass, String database, int fetchSize) {
-        this.host = host;
-        this.port = port;
-        this.user = user;
-        this.pass = pass;
-        this.database = database;
-        this.fetchSize = fetchSize;
+    public SQLDriver(SQLCredentials sqlCredentials) {
+        this.host = sqlCredentials.getHost();
+        this.port = sqlCredentials.getPort();
+        this.user = sqlCredentials.getUser();
+        this.pass = sqlCredentials.getPassword();
+        this.database = sqlCredentials.getDatabase();
+        this.fetchSize = 2000;
         start();
-    }
-
-    public int getFetchSize() {
-        return fetchSize;
     }
 
     public void start() {

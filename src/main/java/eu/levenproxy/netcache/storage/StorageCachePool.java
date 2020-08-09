@@ -1,6 +1,7 @@
 package eu.levenproxy.netcache.storage;
 
 import eu.levenproxy.netcache.server.CacheServer;
+import eu.levenproxy.netcache.utils.SQLCredentials;
 import eu.levenproxy.netcache.utils.benchmark.Benchmark;
 
 import java.util.HashMap;
@@ -15,9 +16,9 @@ public class StorageCachePool {
     private final ConcurrentHashMap<String, Storage> cache;
     private final ExecutorService executor;
 
-    public StorageCachePool(CacheServer cacheServer) {
+    public StorageCachePool(CacheServer cacheServer, SQLCredentials sqlCredentials) {
         this.cacheServer = cacheServer;
-        this.sqlDriver = new SQLDriver("51.195.45.36", 3306, "cache", "1234", "cache", 2000);
+        this.sqlDriver = new SQLDriver(sqlCredentials);
         this.cache = new ConcurrentHashMap<>();
         this.executor = Executors.newCachedThreadPool();
         cacheServer.getLogger().info("Start loading storages...");
