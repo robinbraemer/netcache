@@ -15,7 +15,7 @@ public class HeartbeatJob extends CronJob {
 
     @Override
     public void onTickRateFired() {
-        netCacheClient.kryoClient().send(new PacketRequestHeartBeat(netCacheClient.getMemberName(), netCacheClient.getSessionId(), System.currentTimeMillis()));
+        netCacheClient.kryoClient().send(new PacketRequestHeartBeat(netCacheClient.getSessionId(), netCacheClient.getMemberName(), System.currentTimeMillis()));
     }
 
 }
