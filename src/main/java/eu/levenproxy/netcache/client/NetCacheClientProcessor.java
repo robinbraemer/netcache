@@ -16,22 +16,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Processor {
+public class NetCacheClientProcessor {
 
     private final ExecutorService executor;
     private final CompletableFuture<Boolean> startFuture;
     private final ConcurrentHashMap<String, CompletableFuture<?>> cacheCallbackMap;
     private final ConcurrentHashMap<String, CompletableFuture<?>> broadcastCallbackMap;
-    private final CacheClient cacheClient;
+    private final NetCacheClient netCacheClient;
     private final StorageCodec storageCodec;
 
-    public Processor(CacheClient cacheClient) {
+    public NetCacheClientProcessor(NetCacheClient netCacheClient) {
         this.executor = Executors.newCachedThreadPool();
         this.startFuture = new CompletableFuture<>();
         this.cacheCallbackMap = new ConcurrentHashMap<>();
         this.broadcastCallbackMap = new ConcurrentHashMap<>();
-        this.storageCodec = new StorageCodec(cacheClient);
-        this.cacheClient = cacheClient;
+        this.storageCodec = new StorageCodec(netCacheClient);
+        this.netCacheClient = netCacheClient;
     }
 
     protected CompletableFuture<Boolean> getStartFuture() {
@@ -43,22 +43,22 @@ public class Processor {
             PacketResponseRegisterSession packet = (PacketResponseRegisterSession) object;
             startFuture.complete(packet.success);
             if (packet.success) {
-                cacheClient.getLogger().info("Session successful registered. (memberName=" + cacheClient.getMemberName() + " sessionId=" + cacheClient.getSessionId() + ")");
+                netCacheClient.getLogger().info("Session successful registered. (memberName=" + netCacheClient.getMemberName() + " sessionId=" + netCacheClient.getSessionId() + ")");
             } else {
-                cacheClient.getLogger().info("Session registration failed. (memberName=" + cacheClient.getMemberName() + " sessionId=" + cacheClient.getSessionId() + ")");
+                netCacheClient.getLogger().info("Session registration failed. (memberName=" + netCacheClient.getMemberName() + " sessionId=" + netCacheClient.getSessionId() + ")");
                 System.exit(-1);
             }
         } else if (object instanceof PacketBroadcastToAllClients) {
             PacketBroadcastToAllClients packet = (PacketBroadcastToAllClients) object;
-            if (cacheClient.broadcastManager().hasReceiver(packet.channel)) {
-                BroadcastChannelReceiver receiver = cacheClient.broadcastManager().getReceiver(packet.channel);
+            if (netCacheClient.broadcastManager().hasReceiver(packet.channel)) {
+                BroadcastChannelReceiver receiver = netCacheClient.broadcastManager().getReceiver(packet.channel);
                 Object broadcasted = storageCodec.decodeFromBase64(packet.content64);
                 executor.execute(() -> receiver.onReceive(packet.clientName, broadcasted));
             }
         } else if (object instanceof PacketBroadcastToClient) {
             PacketBroadcastToClient packet = (PacketBroadcastToClient) object;
-            if (cacheClient.broadcastManager().hasClientReceiver(packet.channel)) {
-                ClientChannelReceiver receiver = cacheClient.broadcastManager().getClientReceiver(packet.channel);
+            if (netCacheClient.broadcastManager().hasClientReceiver(packet.channel)) {
+                ClientChannelReceiver receiver = netCacheClient.broadcastManager().getClientReceiver(packet.channel);
                 Object message = storageCodec.decodeFromBase64(packet.content64);
                 try {
                     Object response = executor.submit(() -> receiver.onReceive(packet.clientName, message)).get();
@@ -121,35 +121,35 @@ public class Processor {
 
 
     public void registerBroadcastReceiver(BroadcastChannelReceiver broadcastChannelReceiver) {
-        cacheClient.getLogger().info("Registering broadcast-channel-receiver " + broadcastChannelReceiver.getName());
-        cacheClient.broadcastManager().registerBroadcastReceiver(broadcastChannelReceiver);
-        cacheClient.kryoClient().send(new PacketRequestRegisterBroadcastChannel(cacheClient.getMemberName(), broadcastChannelReceiver.getName()));
+        netCacheClient.getLogger().info("Registering broadcast-channel-receiver " + broadcastChannelReceiver.getName());
+        netCacheClient.broadcastManager().registerBroadcastReceiver(broadcastChannelReceiver);
+        netCacheClient.kryoClient().send(new PacketRequestRegisterBroadcastChannel(netCacheClient.getMemberName(), broadcastChannelReceiver.getName()));
     }
 
     public void registerClientReceiver(ClientChannelReceiver clientChannelReceiver) {
-        cacheClient.getLogger().info("Registering client-channel-receiver " + clientChannelReceiver.getName());
-        cacheClient.broadcastManager().registerClientReceiver(clientChannelReceiver);
-        cacheClient.kryoClient().send(new PacketRequestRegisterClientChannel(cacheClient.getMemberName(), clientChannelReceiver.getName()));
+        netCacheClient.getLogger().info("Registering client-channel-receiver " + clientChannelReceiver.getName());
+        netCacheClient.broadcastManager().registerClientReceiver(clientChannelReceiver);
+        netCacheClient.kryoClient().send(new PacketRequestRegisterClientChannel(netCacheClient.getMemberName(), clientChannelReceiver.getName()));
     }
 
 
     public <T> void broadcast(String channel, T object) {
         if (!(object instanceof Serializable))
             throw new IllegalArgumentException("object isn't instanceof 'Serializable.class'! Please implement it for serialization.");
-        if (cacheClient.getSessionId() == null)
+        if (netCacheClient.getSessionId() == null)
             throw new NullPointerException("client isn't registered with server or couldn't get the sessionId!");
         String base64 = storageCodec.encodeToBase64(object);
-        this.cacheClient.kryoClient().send(new PacketBroadcastChannel(cacheClient.getMemberName(), channel, base64), true);
+        this.netCacheClient.kryoClient().send(new PacketBroadcastChannel(netCacheClient.getMemberName(), channel, base64), true);
     }
 
     public <T> void broadcastAsync(String channel, T object) {
         this.executor.submit(() -> {
             if (!(object instanceof Serializable))
                 throw new IllegalArgumentException("object isn't instanceof 'Serializable.class'! Please implement it for serialization.");
-            if (cacheClient.getSessionId() == null)
+            if (netCacheClient.getSessionId() == null)
                 throw new NullPointerException("client isn't registered with server or couldn't get the sessionId!");
             String base64 = storageCodec.encodeToBase64(object);
-            this.cacheClient.kryoClient().send(new PacketBroadcastChannel(cacheClient.getMemberName(), channel, base64), false);
+            this.netCacheClient.kryoClient().send(new PacketBroadcastChannel(netCacheClient.getMemberName(), channel, base64), false);
         });
     }
 
@@ -159,13 +159,13 @@ public class Processor {
                 throw new IllegalArgumentException("object is instanceof Map. Please use #broadcastOnChannelMap() instead!");
             if (!(object instanceof Serializable))
                 throw new IllegalArgumentException("object isn't instanceof 'Serializable.class'! Please implement it for serialization.");
-            if (cacheClient.getSessionId() == null)
+            if (netCacheClient.getSessionId() == null)
                 throw new NullPointerException("client isn't registered with server or couldn't get the sessionId!");
             String futureId = Utils.getAlphaNumericString(128);
             String base64 = storageCodec.encodeToBase64(object);
             CompletableFuture<T> future = new CompletableFuture<>();
             this.broadcastCallbackMap.put(futureId, future);
-            this.cacheClient.kryoClient().send(new PacketBroadcastRequestClient(cacheClient.getMemberName(), futureId, clientName, channel, base64));
+            this.netCacheClient.kryoClient().send(new PacketBroadcastRequestClient(netCacheClient.getMemberName(), futureId, clientName, channel, base64));
             return future.get();
         } catch (Exception e) {
             e.printStackTrace();
@@ -191,7 +191,7 @@ public class Processor {
         try {
             cacheCallbackMap.put(futureId, future);
             String base64 = storageCodec.encodeToBase64(object);
-            cacheClient.kryoClient().send(new PacketRequestCacheSet(futureId, name, key, base64), true);
+            netCacheClient.kryoClient().send(new PacketRequestCacheSet(futureId, name, key, base64), true);
             return future.get();
         } catch (Exception e) {
             e.printStackTrace();
@@ -207,7 +207,7 @@ public class Processor {
                 try {
                     cacheCallbackMap.put(futureId, future);
                     String base64 = storageCodec.encodeToBase64(object);
-                    cacheClient.kryoClient().send(new PacketRequestCacheSet(futureId, name, key, base64), false);
+                    netCacheClient.kryoClient().send(new PacketRequestCacheSet(futureId, name, key, base64), false);
                     return future.get();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -234,7 +234,7 @@ public class Processor {
         try {
             cacheCallbackMap.put(futureId, future);
             HashMap<String, String> base64Map = storageCodec.encodeToBase64Map(contentMap);
-            cacheClient.kryoClient().send(new PacketRequestCacheSetAll(futureId, name, base64Map), true);
+            netCacheClient.kryoClient().send(new PacketRequestCacheSetAll(futureId, name, base64Map), true);
             return future.get();
         } catch (Exception e) {
             e.printStackTrace();
@@ -250,7 +250,7 @@ public class Processor {
                 try {
                     cacheCallbackMap.put(futureId, future);
                     HashMap<String, String> base64Map = storageCodec.encodeToBase64Map(contentMap);
-                    cacheClient.kryoClient().send(new PacketRequestCacheSetAll(futureId, name, base64Map), false);
+                    netCacheClient.kryoClient().send(new PacketRequestCacheSetAll(futureId, name, base64Map), false);
                     return future.get();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -276,7 +276,7 @@ public class Processor {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         try {
             cacheCallbackMap.put(futureId, future);
-            cacheClient.kryoClient().send(new PacketRequestCacheDelete(futureId, name, key), false);
+            netCacheClient.kryoClient().send(new PacketRequestCacheDelete(futureId, name, key), false);
             return future.get();
         } catch (Exception e) {
             e.printStackTrace();
@@ -291,7 +291,7 @@ public class Processor {
                 CompletableFuture<Boolean> future = new CompletableFuture<>();
                 try {
                     cacheCallbackMap.put(futureId, future);
-                    cacheClient.kryoClient().send(new PacketRequestCacheDelete(futureId, name, key), false);
+                    netCacheClient.kryoClient().send(new PacketRequestCacheDelete(futureId, name, key), false);
                     return future.get();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -318,7 +318,7 @@ public class Processor {
         CompletableFuture<T> completableFuture = new CompletableFuture<>();
         try {
             cacheCallbackMap.put(futureId, completableFuture);
-            cacheClient.kryoClient().send(new PacketRequestCacheGet(futureId, name, key), true);
+            netCacheClient.kryoClient().send(new PacketRequestCacheGet(futureId, name, key), true);
             return completableFuture.get();
         } catch (Exception e) {
             e.printStackTrace();
@@ -333,7 +333,7 @@ public class Processor {
                 CompletableFuture<T> completableFuture = new CompletableFuture<>();
                 try {
                     cacheCallbackMap.put(futureId, completableFuture);
-                    cacheClient.kryoClient().send(new PacketRequestCacheGet(futureId, name, key), true);
+                    netCacheClient.kryoClient().send(new PacketRequestCacheGet(futureId, name, key), true);
                     return completableFuture.get();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -360,7 +360,7 @@ public class Processor {
         CompletableFuture<Boolean> completableFuture = new CompletableFuture<>();
         try {
             cacheCallbackMap.put(futureId, completableFuture);
-            cacheClient.kryoClient().send(new PacketRequestCacheContains(futureId, name, key), true);
+            netCacheClient.kryoClient().send(new PacketRequestCacheContains(futureId, name, key), true);
             return completableFuture.get();
         } catch (Exception e) {
             e.printStackTrace();
@@ -375,7 +375,7 @@ public class Processor {
                 CompletableFuture<Boolean> completableFuture = new CompletableFuture<>();
                 try {
                     cacheCallbackMap.put(futureId, completableFuture);
-                    cacheClient.kryoClient().send(new PacketRequestCacheContains(futureId, name, key), false);
+                    netCacheClient.kryoClient().send(new PacketRequestCacheContains(futureId, name, key), false);
                     return completableFuture.get();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -401,7 +401,7 @@ public class Processor {
         CompletableFuture<HashMap<String, T>> completableFuture = new CompletableFuture<>();
         try {
             cacheCallbackMap.put(futureId, completableFuture);
-            cacheClient.kryoClient().send(new PacketRequestCacheGetAll(futureId, name), true);
+            netCacheClient.kryoClient().send(new PacketRequestCacheGetAll(futureId, name), true);
             return completableFuture.get();
         } catch (Exception e) {
             e.printStackTrace();
@@ -416,7 +416,7 @@ public class Processor {
                 CompletableFuture<HashMap<String, T>> completableFuture = new CompletableFuture<>();
                 try {
                     cacheCallbackMap.put(futureId, completableFuture);
-                    cacheClient.kryoClient().send(new PacketRequestCacheGetAll(futureId, name), false);
+                    netCacheClient.kryoClient().send(new PacketRequestCacheGetAll(futureId, name), false);
                     return completableFuture.get();
                 } catch (Exception e) {
                     e.printStackTrace();

@@ -1,6 +1,6 @@
 package eu.levenproxy.netcache.storage;
 
-import eu.levenproxy.netcache.server.CacheServer;
+import eu.levenproxy.netcache.server.NetCacheServer;
 import eu.levenproxy.netcache.utils.SQLCredentials;
 import eu.levenproxy.netcache.utils.benchmark.Benchmark;
 
@@ -11,19 +11,19 @@ import java.util.concurrent.Executors;
 
 public class StorageCachePool {
 
-    private final CacheServer cacheServer;
+    private final NetCacheServer netCacheServer;
     private final SQLDriver sqlDriver;
     private final ConcurrentHashMap<String, Storage> cache;
     private final ExecutorService executor;
 
-    public StorageCachePool(CacheServer cacheServer, SQLCredentials sqlCredentials) {
-        this.cacheServer = cacheServer;
+    public StorageCachePool(NetCacheServer netCacheServer, SQLCredentials sqlCredentials) {
+        this.netCacheServer = netCacheServer;
         this.sqlDriver = new SQLDriver(sqlCredentials);
         this.cache = new ConcurrentHashMap<>();
         this.executor = Executors.newCachedThreadPool();
-        cacheServer.getLogger().info("Start loading storages...");
+        netCacheServer.getLogger().info("Start loading storages...");
         this.sqlDriver.getTableNames().forEach(this::getStorage);
-        cacheServer.getLogger().info("Loaded all storages!");
+        netCacheServer.getLogger().info("Loaded all storages!");
     }
 
     public SQLDriver getSqlDriver() {
@@ -36,11 +36,11 @@ public class StorageCachePool {
             storage = this.cache.get(name);
         } else {
             Benchmark benchmark = new Benchmark().record();
-            cacheServer.getLogger().info("Loading storage '" + name + "'...");
+            netCacheServer.getLogger().info("Loading storage '" + name + "'...");
             storage = new SQLStorage(sqlDriver, this, name);
             storage.load();
             this.cache.put(name, storage);
-            cacheServer.getLogger().info("Successful loaded '" + name + "' in " + benchmark.stop().asMillis() + "!");
+            netCacheServer.getLogger().info("Successful loaded '" + name + "' in " + benchmark.stop().asMillis() + "!");
         }
         return storage;
     }

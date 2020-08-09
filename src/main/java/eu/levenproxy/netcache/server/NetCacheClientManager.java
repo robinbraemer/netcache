@@ -6,12 +6,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 
-public class ClientManager {
+public class NetCacheClientManager {
 
-    private HashMap<String, ClientConnection> clientMap;
+    private HashMap<String, NetCacheClientConnection> clientMap;
     private HashMap<String, CompletableFuture<String>> clientCallbackMap;
 
-    public ClientManager() {
+    public NetCacheClientManager() {
         this.clientMap = new HashMap<>();
         this.clientCallbackMap = new HashMap<>();
     }
@@ -29,15 +29,15 @@ public class ClientManager {
         this.clientCallbackMap.remove(futureId);
     }
 
-    public void addClient(ClientConnection connection) {
+    public void addClient(NetCacheClientConnection connection) {
         this.clientMap.put(connection.getMemberName(), connection);
     }
 
-    public ClientConnection getClientName(String memberName) {
+    public NetCacheClientConnection getClientName(String memberName) {
         return this.clientMap.getOrDefault(memberName, null);
     }
 
-    public ClientConnection getClientSessionId(String sessionId) {
+    public NetCacheClientConnection getClientSessionId(String sessionId) {
         return this.clientMap.entrySet().stream().filter(entry -> entry.getValue().getSessionId().equals(sessionId)).findAny().get().getValue();
     }
 
@@ -45,8 +45,8 @@ public class ClientManager {
         this.clientMap.remove(memberName);
     }
 
-    public HashSet<ClientConnection> getBroadcastReceiver(String channel) {
-        HashSet<ClientConnection> hashSet = new HashSet<>();
+    public HashSet<NetCacheClientConnection> getBroadcastReceiver(String channel) {
+        HashSet<NetCacheClientConnection> hashSet = new HashSet<>();
         this.clientMap.forEach((key, value) -> {
             if(value.hasBroadcastChannel(channel)) {
                 hashSet.add(value);
@@ -57,9 +57,9 @@ public class ClientManager {
 
     public ChannelHandlerContext getClientReceiver(String memberName, String channel) {
         ChannelHandlerContext connection = null;
-        for(ClientConnection clientConnection : this.clientMap.values()) {
-            if(clientConnection.hasClientChannel(channel)) {
-                connection = clientConnection.getConnection();
+        for(NetCacheClientConnection netCacheClientConnection : this.clientMap.values()) {
+            if(netCacheClientConnection.hasClientChannel(channel)) {
+                connection = netCacheClientConnection.getConnection();
                 break;
             }
         }
@@ -67,18 +67,18 @@ public class ClientManager {
     }
 
     public void addBroadcastChannel(String memberName, String channel) {
-        ClientConnection clientConnection = getClientName(memberName);
-        if(clientConnection != null) {
-            clientConnection.addBroadcastChannel(channel);
-            clientMap.put(memberName, clientConnection);
+        NetCacheClientConnection netCacheClientConnection = getClientName(memberName);
+        if(netCacheClientConnection != null) {
+            netCacheClientConnection.addBroadcastChannel(channel);
+            clientMap.put(memberName, netCacheClientConnection);
         }
     }
 
     public void addClientChannel(String memberName, String channel) {
-        ClientConnection clientConnection = getClientName(memberName);
-        if(clientConnection != null) {
-            clientConnection.addClientChannel(channel);
-            clientMap.put(memberName, clientConnection);
+        NetCacheClientConnection netCacheClientConnection = getClientName(memberName);
+        if(netCacheClientConnection != null) {
+            netCacheClientConnection.addClientChannel(channel);
+            clientMap.put(memberName, netCacheClientConnection);
         }
     }
 }

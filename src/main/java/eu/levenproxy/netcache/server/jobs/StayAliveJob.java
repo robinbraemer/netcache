@@ -1,20 +1,20 @@
 package eu.levenproxy.netcache.server.jobs;
 
 
-import eu.levenproxy.netcache.server.CacheServer;
+import eu.levenproxy.netcache.server.NetCacheServer;
 import eu.levenproxy.netcache.utils.cron.CronJob;
 
 public class StayAliveJob extends CronJob {
 
-    final CacheServer cacheServer;
+    final NetCacheServer netCacheServer;
 
-    public StayAliveJob(CacheServer cacheServer) {
+    public StayAliveJob(NetCacheServer netCacheServer) {
         super("StayAliveJob", 45, true);
-        this.cacheServer = cacheServer;
+        this.netCacheServer = netCacheServer;
     }
 
     @Override
     public void onTickRateFired() {
-        cacheServer.cachePool().getSqlDriver().executeQuery("SELECT 1");
+        netCacheServer.cachePool().getSqlDriver().executeQuery("SELECT 1");
     }
 }

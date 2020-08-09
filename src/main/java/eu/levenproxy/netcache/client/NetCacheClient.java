@@ -12,7 +12,7 @@ import eu.levenproxy.netcache.utils.cron.CronTimerTask;
 
 import java.util.concurrent.Executors;
 
-public class CacheClient {
+public class NetCacheClient {
 
     private final Logger logger;
     private final Thread loggerThread;
@@ -21,15 +21,15 @@ public class CacheClient {
     private final String sessionId;
 
     private final ThreadedClient kryoClient;
-    private final Processor processor;
-    private final BroadcastManager broadcastManager;
+    private final NetCacheClientProcessor processor;
+    private final NetCacheBroadcastManager netCacheBroadcastManager;
 
     private final CronTimerTask cronTimerTask;
 
     private final String host;
     private final int tcpPort;
 
-    public CacheClient(String configName, KryoNetty kryoNetty) {
+    public NetCacheClient(String configName, KryoNetty kryoNetty) {
         this.logger = new Logger();
         Log.set(Log.LEVEL_NONE);
         this.loggerThread = new Thread(logger::start);
@@ -41,10 +41,10 @@ public class CacheClient {
         this.sessionId = Utils.getAlphaNumericString(32);
 
         this.kryoClient = new ThreadedClient(kryoNetty);
-        this.kryoClient.eventHandler().register(new ClientListener(this));
+        this.kryoClient.eventHandler().register(new NetCacheClientListener(this));
 
-        this.processor = new Processor(this);
-        this.broadcastManager = new BroadcastManager(this);
+        this.processor = new NetCacheClientProcessor(this);
+        this.netCacheBroadcastManager = new NetCacheBroadcastManager(this);
 
         this.cronTimerTask = new CronTimerTask(Executors.newCachedThreadPool());
         this.cronTimerTask.registerJob(new HeartbeatJob(this));
@@ -57,8 +57,8 @@ public class CacheClient {
         });
     }
 
-    public BroadcastManager broadcastManager() {
-        return broadcastManager;
+    public NetCacheBroadcastManager broadcastManager() {
+        return netCacheBroadcastManager;
     }
 
     public ThreadedClient kryoClient() {
@@ -103,7 +103,7 @@ public class CacheClient {
         loggerThread.interrupt();
     }
 
-    public Processor process() {
+    public NetCacheClientProcessor process() {
         return this.processor;
     }
 

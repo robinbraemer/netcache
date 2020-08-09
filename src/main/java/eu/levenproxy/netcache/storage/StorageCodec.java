@@ -3,7 +3,7 @@ package eu.levenproxy.netcache.storage;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import eu.levenproxy.netcache.client.CacheClient;
+import eu.levenproxy.netcache.client.NetCacheClient;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -12,10 +12,10 @@ import java.util.HashMap;
 
 public class StorageCodec {
 
-    private final CacheClient cacheClient;
+    private final NetCacheClient netCacheClient;
 
-    public StorageCodec(CacheClient cacheClient) {
-        this.cacheClient = cacheClient;
+    public StorageCodec(NetCacheClient netCacheClient) {
+        this.netCacheClient = netCacheClient;
     }
 
     public <T> String encodeToBase64(T object) {
@@ -41,27 +41,27 @@ public class StorageCodec {
     }
 
     public <T> byte[] translateTo(T object) {
-        Kryo kryo = cacheClient.kryoClient().kryoSerialization().getKryo();
+        Kryo kryo = netCacheClient.kryoClient().kryoSerialization().getKryo();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        Output output = cacheClient.kryoClient().kryoSerialization().getOutput();
+        Output output = netCacheClient.kryoClient().kryoSerialization().getOutput();
         output.setOutputStream(outputStream);
         kryo.writeClassAndObject(output, object);
         output.flush();
         output.close();
-        cacheClient.kryoClient().kryoSerialization().freeKryo(kryo);
-        cacheClient.kryoClient().kryoSerialization().freeOutput(output);
+        netCacheClient.kryoClient().kryoSerialization().freeKryo(kryo);
+        netCacheClient.kryoClient().kryoSerialization().freeOutput(output);
         return outputStream.toByteArray();
     }
 
     public <T> T translateFrom(byte[] bytes) {
-        Kryo kryo = cacheClient.kryoClient().kryoSerialization().getKryo();
+        Kryo kryo = netCacheClient.kryoClient().kryoSerialization().getKryo();
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-        Input input = cacheClient.kryoClient().kryoSerialization().getInput();
+        Input input = netCacheClient.kryoClient().kryoSerialization().getInput();
         input.setInputStream(inputStream);
         T object = (T) kryo.readClassAndObject(input);
         input.close();
-        cacheClient.kryoClient().kryoSerialization().freeKryo(kryo);
-        cacheClient.kryoClient().kryoSerialization().freeInput(input);
+        netCacheClient.kryoClient().kryoSerialization().freeKryo(kryo);
+        netCacheClient.kryoClient().kryoSerialization().freeInput(input);
         return object;
     }
 

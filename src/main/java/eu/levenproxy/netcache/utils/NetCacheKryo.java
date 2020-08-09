@@ -4,7 +4,7 @@ import com.esotericsoftware.kryonetty.kryo.KryoNetty;
 import eu.levenproxy.netcache.packets.request.*;
 import eu.levenproxy.netcache.packets.response.*;
 
-public class KryoContext {
+public class NetCacheKryo {
 
     private static final KryoNetty KRYO_NETTY = new KryoNetty()
             .register(

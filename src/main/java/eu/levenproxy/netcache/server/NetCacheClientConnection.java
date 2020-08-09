@@ -4,7 +4,7 @@ import io.netty.channel.ChannelHandlerContext;
 
 import java.util.HashSet;
 
-public class ClientConnection {
+public class NetCacheClientConnection {
 
     private final String memberName;
     private final String sessionId;
@@ -12,7 +12,7 @@ public class ClientConnection {
     private final HashSet<String> clientChannel;
     private final ChannelHandlerContext connection;
 
-    public ClientConnection(String memberName, String sessionId, ChannelHandlerContext connection) {
+    public NetCacheClientConnection(String memberName, String sessionId, ChannelHandlerContext connection) {
         this.memberName = memberName;
         this.sessionId = sessionId;
         this.broadcastChannel = new HashSet<>();

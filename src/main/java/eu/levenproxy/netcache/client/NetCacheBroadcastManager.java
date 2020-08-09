@@ -7,21 +7,21 @@ import eu.levenproxy.netcache.packets.request.PacketRequestRegisterClientChannel
 
 import java.util.HashMap;
 
-public class BroadcastManager {
+public class NetCacheBroadcastManager {
 
-    private CacheClient cacheClient;
+    private NetCacheClient netCacheClient;
     private HashMap<String, BroadcastChannelReceiver> receiverMap;
     private HashMap<String, ClientChannelReceiver> clientReceiverMap;
 
-    public BroadcastManager(CacheClient cacheClient) {
-        this.cacheClient = cacheClient;
+    public NetCacheBroadcastManager(NetCacheClient netCacheClient) {
+        this.netCacheClient = netCacheClient;
         this.receiverMap = new HashMap<>();
         this.clientReceiverMap = new HashMap<>();
     }
 
     public void registerClientReceiver(ClientChannelReceiver clientChannelReceiver) {
         clientReceiverMap.put(clientChannelReceiver.getName(), clientChannelReceiver);
-        cacheClient.kryoClient().send(new PacketRequestRegisterClientChannel(cacheClient.getMemberName(), clientChannelReceiver.getName()));
+        netCacheClient.kryoClient().send(new PacketRequestRegisterClientChannel(netCacheClient.getMemberName(), clientChannelReceiver.getName()));
     }
 
     public boolean hasClientReceiver(String channel) {
@@ -34,7 +34,7 @@ public class BroadcastManager {
 
     public void registerBroadcastReceiver(BroadcastChannelReceiver broadcastChannelReceiver) {
         receiverMap.put(broadcastChannelReceiver.getName(), broadcastChannelReceiver);
-        cacheClient.kryoClient().send(new PacketRequestRegisterBroadcastChannel(cacheClient.getMemberName(), broadcastChannelReceiver.getName()));
+        netCacheClient.kryoClient().send(new PacketRequestRegisterBroadcastChannel(netCacheClient.getMemberName(), broadcastChannelReceiver.getName()));
     }
 
     public boolean hasReceiver(String channel) {

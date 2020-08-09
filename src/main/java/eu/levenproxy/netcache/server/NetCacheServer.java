@@ -16,7 +16,7 @@ import eu.levenproxy.netcache.utils.cron.CronTimerTask;
 
 import java.util.concurrent.Executors;
 
-public class CacheServer {
+public class NetCacheServer {
 
     private final Logger logger;
     private final Thread loggerThread;
@@ -24,9 +24,9 @@ public class CacheServer {
     private final StorageCachePool cachePool;
     private final CronTimerTask cronTimerTask;
     private final int tcpPort;
-    private final ClientManager clientManager;
+    private final NetCacheClientManager clientManager;
 
-    public CacheServer(KryoNetty kryoNetty, SQLCredentials sqlCredentials) {
+    public NetCacheServer(KryoNetty kryoNetty, SQLCredentials sqlCredentials) {
         this.logger = new Logger();
         Log.set(Log.LEVEL_NONE);
         this.loggerThread = new Thread(logger::start);
@@ -35,10 +35,10 @@ public class CacheServer {
         this.tcpPort = config.getServerPort();
 
         this.kryoServer = new ThreadedServer(kryoNetty);
-        this.kryoServer.eventHandler().register(new ServerListener(this));
+        this.kryoServer.eventHandler().register(new NetCacheServerListener(this));
 
         this.cachePool = new StorageCachePool(this, sqlCredentials);
-        this.clientManager = new ClientManager();
+        this.clientManager = new NetCacheClientManager();
 
         this.cronTimerTask = new CronTimerTask(Executors.newCachedThreadPool());
         this.cronTimerTask.registerJob(new StayAliveJob(this));
@@ -54,7 +54,7 @@ public class CacheServer {
         return logger;
     }
 
-    public ClientManager clientManager() {
+    public NetCacheClientManager clientManager() {
         return clientManager;
     }
 

@@ -7,27 +7,27 @@ import com.esotericsoftware.kryonetty.network.handler.NetworkHandler;
 import com.esotericsoftware.kryonetty.network.handler.NetworkListener;
 import eu.levenproxy.netcache.packets.request.PacketRequestRegisterSession;
 
-public class ClientListener implements NetworkListener {
+public class NetCacheClientListener implements NetworkListener {
 
-    private final CacheClient cacheClient;
+    private final NetCacheClient netCacheClient;
 
-    public ClientListener(CacheClient cacheClient) {
-        this.cacheClient = cacheClient;
+    public NetCacheClientListener(NetCacheClient netCacheClient) {
+        this.netCacheClient = netCacheClient;
     }
 
     @NetworkHandler
     public void onConnect(ConnectEvent event) {
-        cacheClient.getLogger().info("Successful connected to the server! Attempting session-registration...");
-        event.getCtx().channel().writeAndFlush(new PacketRequestRegisterSession(cacheClient.getMemberName(), cacheClient.getSessionId()));
+        netCacheClient.getLogger().info("Successful connected to the server! Attempting session-registration...");
+        event.getCtx().channel().writeAndFlush(new PacketRequestRegisterSession(netCacheClient.getMemberName(), netCacheClient.getSessionId()));
     }
 
     @NetworkHandler
     public void onDisconnect(DisconnectEvent event) {
-        cacheClient.getLogger().info("Disconnected.");
+        netCacheClient.getLogger().info("Disconnected.");
     }
 
     @NetworkHandler
     public void onReceive(ReceiveEvent event) {
-        cacheClient.process().receivedObject(event.getCtx(), event.getObject());
+        netCacheClient.process().receivedObject(event.getCtx(), event.getObject());
     }
 }
