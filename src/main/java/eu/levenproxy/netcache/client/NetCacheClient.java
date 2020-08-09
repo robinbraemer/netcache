@@ -93,8 +93,7 @@ public class NetCacheClient {
     }
 
     public boolean isConnected() {
-        // TODO: Wait for 0.6.4
-        return true;
+        return kryoClient.isConnected();
     }
 
     public void stop() {

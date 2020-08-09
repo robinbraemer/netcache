@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'eu.levenproxy'
-version '1.1'
+version '1.2'
 
 sourceCompatibility = 1.8
 
@@ -17,7 +17,7 @@ repositories {
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 
-    compile group: 'com.github.Koboo', name: 'kryonetty', version: '0.6.3'
+    compile group: 'com.github.Koboo', name: 'kryonetty', version: '0.6.4-dev'
 
     compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.21'
     compile group: 'org.jline', name: 'jline', version: '3.16.0'
