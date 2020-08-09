@@ -17,7 +17,7 @@ repositories {
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 
-    compile group: 'com.github.Koboo', name: 'kryonetty', version: '0.6.4'
+    compile group: 'com.github.Koboo', name: 'kryonetty', version: 'master-SNAPSHOT'
 
     compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.21'
     compile group: 'org.jline', name: 'jline', version: '3.16.0'
